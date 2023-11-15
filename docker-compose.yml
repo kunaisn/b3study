@@ -1,0 +1,49 @@
+version: '3'
+services:
+  golang:
+    build: ./golang
+    ports: 
+      - "8000:8000"
+    tty: true
+    volumes:
+      - ./golang/app:/go/src/
+    depends_on: 
+      - db
+  db:
+    build: ./db
+    image: mysql:8.0.34
+    restart: always
+    container_name: "db"
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: data
+      MYSQL_USER: docker
+      MYSQL_PASSWORD: docker
+      MYSQL_ROOT_PASSWORD: docker
+      TZ: "Asia/Tokyo"
+    volumes:
+      - ./db/sqls:/var/lib/mysql
+      - ./db/init:/docker-entrypoint-initdb.d
+  phpmyadmin:
+    image: phpmyadmin
+    depends_on:
+      - db
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOSTS=db
+      - PMA_USER=docker
+      - PMA_PASSWORD=docker
+    ports:
+      - "3001:80"
+    volumes:
+      - ./phpmyadmin:/dbdata
+  python3:
+    restart: always
+    build: ./python3
+    volumes:
+      - ./python3:/app/
+      - ./golang/app:/go/data
+    container_name: 'python3'
+    ports:
+      - "8050:8050"
